@@ -521,6 +521,7 @@ public sealed class LuaRuntimeTests : IDisposable
     [InlineData("native_command_listener.lua")]
     [InlineData("frame_scheduler.lua")]
     [InlineData("weapon_factory.lua")]
+    [InlineData("killstreak_arena.lua")]
     public void ShippedExamplesLoad(string fileName)
     {
         var path = Path.Combine(AppContext.BaseDirectory, "examples", fileName);
