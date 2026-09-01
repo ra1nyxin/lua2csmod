@@ -27,13 +27,23 @@ On startup, Lua2CS immediately creates a temporary Lua VM to verify that the nat
 A fresh installation enables `scripts/tpa.lua` immediately, allowing every in-game player to use:
 
 ```text
-!tpa <player>
+!tpalist
+!tpa <query>
+!tpaid <userid>
+!tpaslot <slot>
+!tpaname <name>
+!tpahere <query>
+!tpahereid <userid>
+!tpahereslot <slot>
+!tpaherename <name>
 !tpaccept [player]
 !tpdeny [player]
 !tpcancel
 ```
 
-Without a player name, `!tpaccept` accepts the newest valid incoming request; with a name, it handles the specified request. TPA does not restrict teams, round phases, freeze time, combat state, airborne positions, navigation meshes, or map boundaries. It attempts to teleport the requester to the recipient's exact coordinates as long as both players remain online and alive with valid player entities and positions. The commands require no administrator permission. Delete `scripts/tpa.lua` and run `css_lua unload tpa` to disable it; extracting a new release package again restores the official TPA file.
+`!tpalist` lists userids and slots. The queries accepted by `!tpa` and `!tpahere` support slots, userids, SteamID64 values, and name fragments; the corresponding `id`, `slot`, and `name` commands force one lookup mode. `!tpahere` invites the target player to teleport to the requester. Without a player name, `!tpaccept` or `!tpdeny` handles the newest valid incoming request; with a name, it handles the specified request. Requests expire after 30 seconds, and each requester can have only one pending request.
+
+TPA does not restrict teams, round phases, freeze time, combat state, airborne positions, navigation meshes, or map boundaries. It attempts a teleport as long as both players remain online and alive and the anchor player has a valid position. After acceptance, the player who moves is placed at a random horizontal offset of 48 units from the anchor, with their existing velocity cleared. The commands require no administrator permission. Delete `scripts/tpa.lua` and run `css_lua unload tpa` to disable it; extracting a new release package again restores the official TPA file.
 
 ## 🧪 Script Example
 

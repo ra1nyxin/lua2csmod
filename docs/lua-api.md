@@ -608,12 +608,12 @@ scripts/
 | `bomb_announcer.lua` | 中文播报 C4 状态变化 | 炸弹事件、聊天颜色 |
 | `aim_inspector.lua` | 查询准星所指玩家 | 准星目标、玩家快照 |
 | `team_summary.lua` | 汇总双方人数和存活状态 | 玩家集合、队伍常量 |
-| `tpa.lua` | 玩家间传送请求、接受、拒绝和取消 | 玩家查找、身份校验、定时器、传送 |
+| `tpa.lua` | 玩家间传送请求、反向邀请、玩家列表、接受、拒绝和取消 | 玩家查找、身份校验、定时器、传送 |
 | `infinite_weapon_drop.lua` | 按 Q 原生丢枪并在下一帧补回副本 | 原生命令 Pre 监听、帧调度、武器发放、延迟清理 |
 | `native_command_listener.lua` | 观察或拦截原生游戏命令 | 命令前后置监听、HookResult |
 | `frame_scheduler.lua` | 安排短期帧和 Tick 回调 | 下一帧、世界更新、延迟 Tick、取消注册 |
 | `weapon_factory.lua` | 发放和复制带属性的武器 | 武器对象、弹药、经济外观、武器查询 |
 
-`tpa.lua` 注册 `css_tpa <玩家>`、`css_tpaccept [玩家]`、`css_tpdeny [玩家]` 和 `css_tpcancel`。玩家也可在聊天框中使用对应的 `!tpa`、`!tpaccept`、`!tpdeny` 和 `!tpcancel`。请求在 30 秒后自动过期；只有一个待处理请求时可以省略接受或拒绝命令的玩家参数，同时收到多个请求时必须指定玩家。
+`tpa.lua` 注册 `css_tpalist`、`css_tpa <查询>`、`css_tpaid <userid>`、`css_tpaslot <slot>`、`css_tpaname <名字>`、`css_tpahere <查询>`、`css_tpahereid <userid>`、`css_tpahereslot <slot>`、`css_tpaherename <名字>`、`css_tpaccept [玩家]`、`css_tpdeny [玩家]` 和 `css_tpcancel`。玩家也可在聊天框中使用对应的 `!` 命令。通用查询支持 slot、userid、SteamID64 和名字片段；`tpahere` 会邀请目标玩家传送到自己身边。请求在 30 秒后自动过期，每名请求者同时只能保留一个请求；接受或拒绝命令省略玩家参数时会处理最新收到的有效请求。接受后，实际移动的一方会落在锚点玩家水平随机 48 单位的位置，并清除原有移动速度。
 
 安装包中的模板位于 `addons/counterstrikesharp/plugins/Lua2CS/examples`。复制需要启用的顶层模板到同级 `scripts` 目录；`module_demo.lua` 还需要同时复制 `modules` 子目录。

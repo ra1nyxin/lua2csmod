@@ -27,13 +27,23 @@ Lua2CS 在加载时会立即创建临时 Lua VM，检查原生库确实可用且
 首次安装会直接启用 `scripts/tpa.lua`，所有游戏内玩家均可使用：
 
 ```text
-!tpa <玩家>
+!tpalist
+!tpa <查询>
+!tpaid <userid>
+!tpaslot <slot>
+!tpaname <名字>
+!tpahere <查询>
+!tpahereid <userid>
+!tpahereslot <slot>
+!tpaherename <名字>
 !tpaccept [玩家]
 !tpdeny [玩家]
 !tpcancel
 ```
 
-`!tpaccept` 不写玩家名时会接受最新收到的有效请求，写玩家名时可处理指定请求。TPA 不限制敌我阵营、回合阶段、冻结时间、交战状态、空中位置、导航网格或地图边界；只要双方仍在线、存活且具有有效玩家实体和位置，就会尝试把请求者传送到接受者的精确坐标。命令没有管理员权限要求。删除 `scripts/tpa.lua` 并执行 `css_lua unload tpa` 即可停用；重新解压新版安装包时会恢复官方 TPA 文件。
+`!tpalist` 会列出 userid 和 slot。`!tpa` 与 `!tpahere` 的查询支持 slot、userid、SteamID64 和名字片段；对应的 `id`、`slot`、`name` 命令可强制按一种方式查询。`!tpahere` 会邀请目标玩家传送到自己身边。`!tpaccept` 或 `!tpdeny` 不写玩家名时会处理最新收到的有效请求，写玩家名时可处理指定请求。请求 30 秒后过期，每名请求者同时只能保留一个请求。
+
+TPA 不限制敌我阵营、回合阶段、冻结时间、交战状态、空中位置、导航网格或地图边界；只要双方仍在线、存活且锚点玩家具有有效位置，就会尝试传送。接受后，实际移动的一方会落在锚点玩家水平随机 48 单位的位置，并清除原有移动速度。命令没有管理员权限要求。删除 `scripts/tpa.lua` 并执行 `css_lua unload tpa` 即可停用；重新解压新版安装包时会恢复官方 TPA 文件。
 
 ## 🧪 脚本示例
 
