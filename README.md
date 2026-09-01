@@ -1,14 +1,17 @@
-# Lua2CS
+> **[📖 English](README.en-us.md)**
+> **[📖 简体中文(大陆)](README.md)**
+
+# 🌙 Lua2CS
 
 Lua2CS 是面向 CounterStrikeSharp 的 Lua 5.4 插件宿主。C# 宿主只需安装一次，之后即可直接编写、加载和热重载 Lua 玩法脚本，无需反复编译 DLL 或重启 CS2 服务器。
 
-## 环境要求
+## 🧩 环境要求
 
 - Linux x64 或 Windows x64 CS2 专用服务器
 - Metamod:Source
 - CounterStrikeSharp API 1.0.373 或更高版本，并安装 .NET 10 运行时
 
-## 安装
+## 📦 安装
 
 1. 从 [预发布版本](https://github.com/ra1nyxin/lua2csmod/releases/tag/preview) 下载服务器系统对应的安装包：Linux 使用 `Lua2CS-preview-linux-x64.zip`，Windows 使用 `Lua2CS-preview-win-x64.zip`。
 2. 将压缩包解压到服务器的 `game/csgo` 目录。
@@ -19,7 +22,7 @@ Lua2CS 是面向 CounterStrikeSharp 的 Lua 5.4 插件宿主。C# 宿主只需�
 
 Lua2CS 在加载时会立即创建临时 Lua VM，检查原生库确实可用且版本为 Lua 5.4。安装后可在服务器控制台执行 `css_lua status`，查看 Lua、CounterStrikeSharp、运行平台、自动重载状态和实际脚本目录。即使 `scripts` 目录为空，这项自检也会执行。
 
-## 默认 TPA
+## 📍 默认 TPA
 
 首次安装会直接启用 `scripts/tpa.lua`，所有游戏内玩家均可使用：
 
@@ -32,7 +35,7 @@ Lua2CS 在加载时会立即创建临时 Lua VM，检查原生库确实可用且
 
 `!tpaccept` 不写玩家名时会接受最新收到的有效请求，写玩家名时可处理指定请求。TPA 不限制敌我阵营、回合阶段、冻结时间、交战状态、空中位置、导航网格或地图边界；只要双方仍在线、存活且具有有效玩家实体和位置，就会尝试把请求者传送到接受者的精确坐标。命令没有管理员权限要求。删除 `scripts/tpa.lua` 并执行 `css_lua unload tpa` 即可停用；重新解压新版安装包时会恢复官方 TPA 文件。
 
-## 脚本示例
+## 🧪 脚本示例
 
 ```lua
 local plugin = cs.plugin({
@@ -54,7 +57,7 @@ end)
 
 `scripts` 目录中的每个顶层 `.lua` 文件都是一个独立插件，并拥有独立的 Lua VM。以下划线开头的文件和子目录中的文件只会作为模块使用，不会被当作独立插件加载。
 
-## 管理命令
+## 🛠️ 管理命令
 
 ```text
 css_lua list
@@ -69,7 +72,7 @@ css_lua reload_all
 
 开启自动重载后，修改顶层脚本只会重载对应插件；修改子目录中的公共模块会重载全部 Lua 插件。新脚本会先在独立 VM 中完成语法检查、执行和注册验证，再替换当前版本。重载失败时会保留或恢复旧版本。
 
-## 配置
+## ⚙️ 配置
 
 CounterStrikeSharp 会生成 `addons/counterstrikesharp/configs/plugins/Lua2CS/Lua2CS.json`：
 
@@ -92,7 +95,7 @@ CounterStrikeSharp 会生成 `addons/counterstrikesharp/configs/plugins/Lua2CS/L
 
 默认情况下，Lua 脚本不能访问 `luanet`、原生模块、进程执行或直接文件 I/O。`require` 仍可加载当前脚本目录中的 Lua 模块。
 
-## 接口范围
+## 🔌 接口范围
 
 Lua 脚本可以使用以下能力：
 
@@ -112,7 +115,7 @@ Lua 脚本可以使用以下能力：
 
 Lua 与 C# 之间的字符串统一使用 UTF-8，可直接使用中文插件名、命令说明、聊天文本和持久化内容。修改生命、武器、队伍、实体、传送和 ConVar 等操作会直接影响服务器状态，应只向可信脚本开放。
 
-## 示例模板
+## 📚 示例模板
 
 `examples` 中包含 41 个可独立加载的中文模板和 1 个公共模块示例，覆盖基础命令、原生命令监听、聊天与冷却、事件统计、回合玩法、管理员工具、玩家间传送请求、帧与 Tick 调度、菜单、玩家和武器、无限丢枪、武器复制、弹药、计分板、语音、ConVar、实体、导航、模型、持久化、HUD、地图及模块化脚本。模板包含关键流程、快照时效、身份校验和风险点的中文注释。
 
@@ -120,7 +123,7 @@ Lua 与 C# 之间的字符串统一使用 UTF-8，可直接使用中文插件名
 
 完整接口参见 [Lua 脚本接口](docs/lua-api.md)，可运行示例位于 [examples](examples)。
 
-## 本地构建
+## 🏗️ 本地构建
 
 ```bash
 dotnet restore
@@ -135,6 +138,6 @@ Linux 打包还需要 `curl`、`tar`、glibc C 编译器和 GNU binutils。构�
 - `artifacts/Lua2CS-preview-linux-x64.zip`
 - `artifacts/Lua2CS-preview-win-x64.zip`
 
-## 许可证
+## 📄 许可证
 
 MIT
