@@ -79,9 +79,10 @@ begin_turn = function()
     end
     broadcast(player.name .. " 的回合：输入 !trigger，限时 " .. config.turn_seconds .. " 秒。")
     player:print_alert("轮到你了：!trigger")
+    local steam_id = player.steam_id
     plugin:after(config.turn_seconds, function()
         -- 超时自动扣动，turn 代次可使上一回合的旧定时器失效。
-        resolve_trigger(player.steam_id, turn)
+        resolve_trigger(steam_id, turn)
     end)
 end
 

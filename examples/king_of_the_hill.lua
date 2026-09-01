@@ -14,6 +14,7 @@ local config = {
 local center = nil
 local scores = { t = 0, ct = 0 }
 local finished = false
+local round_active = false
 
 local function distance_squared(a, b)
     local dx, dy, dz = a.x - b.x, a.y - b.y, a.z - b.z
@@ -82,7 +83,7 @@ plugin:command("css_koth", {
 end)
 
 plugin:every(config.score_interval, function()
-    if center == nil or finished then return end
+    if center == nil or finished or not round_active then return end
     local inside = occupants()
     if #inside.t > 0 and #inside.ct == 0 then
         scores.t = scores.t + 1
@@ -105,9 +106,15 @@ end)
 plugin:on("round_start", function()
     scores = { t = 0, ct = 0 }
     finished = false
+    round_active = true
     if center ~= nil then
         cs.server.print_chat_all(cs.colors.green .. "[山丘之王] 占领区已激活，双方开始争夺！")
     end
+    return cs.continue
+end)
+
+plugin:on("round_end", function()
+    round_active = false
     return cs.continue
 end)
 
@@ -115,4 +122,5 @@ plugin:listen("OnMapStart", function()
     center = nil
     scores = { t = 0, ct = 0 }
     finished = false
+    round_active = false
 end)

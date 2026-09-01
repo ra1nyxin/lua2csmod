@@ -613,6 +613,24 @@ scripts/
 | `native_command_listener.lua` | 观察或拦截原生游戏命令 | 命令前后置监听、HookResult |
 | `frame_scheduler.lua` | 安排短期帧和 Tick 回调 | 下一帧、世界更新、延迟 Tick、取消注册 |
 | `weapon_factory.lua` | 发放和复制带属性的武器 | 武器对象、弹药、经济外观、武器查询 |
+| `killstreak_arena.lua` | 连杀即时补给和里程碑强化 | 击杀事件、HUD、玩家属性恢复 |
+| `weapon_shop.lua` | 带限购和事务校验的菜单商店 | 菜单、金钱、武器发放、失败处理 |
+| `map_vote.lua` | 候选地图投票和安全切图 | 菜单、地图列表、定时器、代次校验 |
+| `gun_game.lua` | 击杀升级武器并完成最终刀杀 | 出生与击杀事件、武器、回合结束 |
+| `parkour_time_trial.lua` | 自定义起终点、计时和排行榜 | 坐标、循环检测、持久化 |
+| `juggernaut.lua` | 随机高生命重装 Boss | 玩家集合、装备、属性、状态恢复 |
+| `vampire_mode.lua` | 伤害吸血和击杀提高生命上限 | 伤害事件、帧调度、生命与颜色 |
+| `bounty_hunt.lua` | 玩家出资悬赏、击杀结算和退款 | 玩家查找、金钱事务、离线清理 |
+| `chaos_rounds.lua` | 每回合随机夸张规则 | 回合事件、装备、移动属性、卸载恢复 |
+| `hot_potato.lua` | 攻击传递的倒计时炸弹 | 伤害与死亡事件、定时器、玩家击杀 |
+| `one_in_chamber.lua` | 单发手枪和击杀补弹 | 武器快照、弹药、帧调度 |
+| `zombie_infection.lua` | 母体感染、僵尸复生和阵营转换 | 死亡与出生事件、复活、队伍、属性 |
+| `russian_roulette.lua` | 报名、轮流开枪和随机淘汰 | 命令、定时器、身份重查、玩家击杀 |
+| `reaction_race.lua` | 随机信号抢答和防抢跑积分 | 命令、随机延迟、代次校验 |
+| `trivia_quiz.lua` | 中文题库、限时回答和连对奖励 | 命令、题库、定时器、金钱 |
+| `king_of_the_hill.lua` | 自定义区域占领和双方积分 | 坐标检测、队伍、HTML HUD、回合结束 |
+| `treasure_hunt.lua` | 导航区域随机寻宝和距离提示 | 导航网格、坐标、HTML HUD、奖励 |
+| `death_swap.lua` | 玩家配对并周期交换完整运动状态 | 玩家集合、坐标、视角、速度、传送 |
 
 `tpa.lua` 注册 `css_tpalist`、`css_tpa <查询>`、`css_tpaid <userid>`、`css_tpaslot <slot>`、`css_tpaname <名字>`、`css_tpahere <查询>`、`css_tpahereid <userid>`、`css_tpahereslot <slot>`、`css_tpaherename <名字>`、`css_tpaccept [玩家]`、`css_tpdeny [玩家]` 和 `css_tpcancel`。玩家也可在聊天框中使用对应的 `!` 命令。通用查询支持 slot、userid、SteamID64 和名字片段；`tpahere` 会邀请目标玩家传送到自己身边。请求在 30 秒后自动过期，每名请求者同时只能保留一个请求；接受或拒绝命令省略玩家参数时会处理最新收到的有效请求。接受后，实际移动的一方会落在锚点玩家水平随机 48 单位的位置，并清除原有移动速度。
 

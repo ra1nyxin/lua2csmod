@@ -127,7 +127,7 @@ Strings passed between Lua and C# consistently use UTF-8, so plugin names, comma
 
 ## 📚 Example Templates
 
-`examples` contains 41 independently loadable templates and one shared-module example. They cover basic commands, native command listeners, chat and cooldowns, event statistics, round gameplay, administrator tools, player teleport requests, frame and tick scheduling, menus, players and weapons, unlimited weapon dropping, weapon cloning, ammunition, scoreboards, voice, ConVars, entities, navigation, models, persistence, HUDs, maps, and modular scripts. The templates include comments for key flows, snapshot lifetimes, identity validation, and risk points.
+`examples` contains 59 independently loadable templates and one shared-module example. Alongside basic commands, events, administration, players, weapons, entities, navigation, persistence, HUDs, and modular scripts, the collection now includes advanced modes for killstreaks, weapon shops, map voting, gun game, parkour timing, juggernaut battles, vampirism, player bounties, chaos rounds, hot potato, one-in-the-chamber, zombie infection, Russian roulette, reaction races, trivia, king of the hill, navigation treasure hunts, and death swaps. Templates document key flows, snapshot lifetimes, identity validation, round cleanup, hot-reload recovery, and risk points.
 
 Templates other than TPA do not run by default. The package places TPA in both `scripts` and `examples`, while all other templates are installed only in `examples`. Copy a selected template into the sibling `scripts` directory to load it; later saves are hot-reloaded automatically.
 

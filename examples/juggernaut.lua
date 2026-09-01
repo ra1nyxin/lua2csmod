@@ -99,14 +99,24 @@ plugin:every(config.reveal_interval, function()
         boss_id = nil
         return
     end
+    local position = boss.position
+    if position == nil then
+        cs.server.print_chat_all(string.format(
+            "%s[Boss 情报] %s 剩余 %d HP，位置暂时不可用",
+            cs.colors.orange,
+            boss.name,
+            boss.health or 0
+        ))
+        return
+    end
     cs.server.print_chat_all(string.format(
         "%s[Boss 情报] %s 剩余 %d HP，位置：%.0f %.0f %.0f",
         cs.colors.orange,
         boss.name,
         boss.health or 0,
-        boss.position.x,
-        boss.position.y,
-        boss.position.z
+        position.x,
+        position.y,
+        position.z
     ))
 end)
 

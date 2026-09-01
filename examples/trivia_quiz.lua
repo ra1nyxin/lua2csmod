@@ -76,6 +76,7 @@ ask_next = function(expected_generation)
     end
     quiz.index = quiz.index + 1
     quiz.answered = {}
+    quiz.open = true
     quiz.token = quiz.token + 1
     local token = quiz.token
     local question = quiz.questions[quiz.index]
@@ -84,6 +85,7 @@ ask_next = function(expected_generation)
 
     plugin:after(config.answer_seconds, function()
         if quiz == nil or quiz.token ~= token then return end
+        quiz.open = false
         broadcast("时间到，参考答案：" .. question.answers[1])
         plugin:after(config.between_questions, function() ask_next(expected_generation) end)
     end)
@@ -108,7 +110,7 @@ plugin:command("css_quiz_start", {
     for index = 1, math.min(config.questions_per_match, #pool) do selected[index] = pool[index] end
 
     generation = generation + 1
-    quiz = { questions = selected, index = 0, token = 0, answered = {}, scores = {}, streaks = {} }
+    quiz = { questions = selected, index = 0, token = 0, open = false, answered = {}, scores = {}, streaks = {} }
     broadcast("问答开始，每题每人只能回答一次，连续答对有额外金钱。")
     ask_next(generation)
 end)
@@ -119,7 +121,7 @@ plugin:command("css_answer", {
     min_args = 1,
     usage = "<答案>"
 }, function(player, command)
-    if quiz == nil or quiz.index < 1 then
+    if quiz == nil or quiz.index < 1 or not quiz.open then
         command:reply("当前没有题目。")
         return
     end

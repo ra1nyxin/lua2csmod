@@ -479,71 +479,30 @@ public sealed class LuaRuntimeTests : IDisposable
         Assert.False(plugin.IsActive);
     }
 
+    public static IEnumerable<object[]> ShippedExamples() =>
+        Directory.EnumerateFiles(Path.Combine(AppContext.BaseDirectory, "examples"), "*.lua")
+            .OrderBy(path => path, StringComparer.Ordinal)
+            .Select(path => new object[] { Path.GetFileName(path) });
+
     [Theory]
-    [InlineData("hello.lua")]
-    [InlineData("qwq.lua")]
-    [InlineData("awa.lua")]
-    [InlineData("round_timer.lua")]
-    [InlineData("admin_tools.lua")]
-    [InlineData("spawn_protection.lua")]
-    [InlineData("round_loadout.lua")]
-    [InlineData("kill_reward.lua")]
-    [InlineData("player_hud.lua")]
-    [InlineData("join_messages.lua")]
-    [InlineData("map_tools.lua")]
-    [InlineData("checkpoints.lua")]
-    [InlineData("player_info.lua")]
-    [InlineData("module_demo.lua")]
-    [InlineData("persistent_kills.lua")]
-    [InlineData("target_tools.lua")]
-    [InlineData("game_status.lua")]
-    [InlineData("entity_tools.lua")]
-    [InlineData("menu_demo.lua")]
-    [InlineData("movement_fun.lua")]
-    [InlineData("nav_tools.lua")]
-    [InlineData("round_control.lua")]
-    [InlineData("model_tools.lua")]
-    [InlineData("ammo_refill.lua")]
-    [InlineData("weapon_inspector.lua")]
-    [InlineData("scoreboard_tools.lua")]
-    [InlineData("voice_tools.lua")]
-    [InlineData("client_convar.lua")]
-    [InlineData("bot_convar.lua")]
-    [InlineData("damage_report.lua")]
-    [InlineData("chat_cooldown.lua")]
-    [InlineData("random_loadout.lua")]
-    [InlineData("welcome_menu.lua")]
-    [InlineData("bomb_announcer.lua")]
-    [InlineData("aim_inspector.lua")]
-    [InlineData("team_summary.lua")]
-    [InlineData("tpa.lua")]
-    [InlineData("infinite_weapon_drop.lua")]
-    [InlineData("native_command_listener.lua")]
-    [InlineData("frame_scheduler.lua")]
-    [InlineData("weapon_factory.lua")]
-    [InlineData("killstreak_arena.lua")]
-    [InlineData("weapon_shop.lua")]
-    [InlineData("map_vote.lua")]
-    [InlineData("gun_game.lua")]
-    [InlineData("parkour_time_trial.lua")]
-    [InlineData("juggernaut.lua")]
-    [InlineData("vampire_mode.lua")]
-    [InlineData("bounty_hunt.lua")]
-    [InlineData("chaos_rounds.lua")]
-    [InlineData("hot_potato.lua")]
-    [InlineData("one_in_chamber.lua")]
-    [InlineData("zombie_infection.lua")]
-    [InlineData("russian_roulette.lua")]
-    [InlineData("reaction_race.lua")]
-    [InlineData("trivia_quiz.lua")]
-    [InlineData("king_of_the_hill.lua")]
-    [InlineData("treasure_hunt.lua")]
-    [InlineData("death_swap.lua")]
+    [MemberData(nameof(ShippedExamples))]
     public void ShippedExamplesLoad(string fileName)
     {
         var path = Path.Combine(AppContext.BaseDirectory, "examples", fileName);
         using var plugin = new LuaRuntime(NullLogger.Instance, false).Prepare(path);
         Assert.False(string.IsNullOrWhiteSpace(plugin.Name));
+    }
+
+    [Fact]
+    public void ShippedExamplesAreListedInChineseApiDocumentation()
+    {
+        var documentation = File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "docs", "lua-api.md"));
+
+        foreach (var row in ShippedExamples())
+        {
+            var fileName = Assert.IsType<string>(row[0]);
+            Assert.Contains($"`{fileName}`", documentation, StringComparison.Ordinal);
+        }
     }
 
     [Fact]

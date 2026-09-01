@@ -62,8 +62,9 @@ plugin:on("player_spawn", function(event)
     local player = event.player
     if not human(player) then return cs.continue end
     empowered[player.steam_id] = nil
+    local steam_id = player.steam_id
     plugin:next_frame(function()
-        local current = cs.players.get_steamid(player.steam_id)
+        local current = cs.players.get_steamid(steam_id)
         if current == nil or not current.is_alive then return end
         current:set_max_health(config.base_max_health)
         current:set_health(config.base_max_health)

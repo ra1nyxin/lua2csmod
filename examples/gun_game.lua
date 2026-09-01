@@ -20,6 +20,7 @@ local config = {
 
 local levels = {}
 local round_finished = false
+local generation = 0
 
 local function human(player)
     return player ~= nil and not player.is_bot and not player.is_hltv
@@ -45,13 +46,15 @@ end
 
 local function schedule_equip(player)
     local steam_id = player.steam_id
+    local expected_generation = generation
     plugin:after(config.equip_delay, function()
         -- 延迟回调重新按 SteamID 查找，不保留会过期的 Pawn 快照。
-        equip(steam_id)
+        if generation == expected_generation then equip(steam_id) end
     end)
 end
 
 plugin:on("round_start", function()
+    generation = generation + 1
     levels = {}
     round_finished = false
     cs.server.print_chat_all(cs.colors.gold .. "[枪械升级战] 击杀即可升级，最终用刀击杀获胜！")
@@ -102,6 +105,7 @@ plugin:command("css_gungame", {
 end)
 
 plugin:listen("OnMapStart", function()
+    generation = generation + 1
     levels = {}
     round_finished = false
 end)

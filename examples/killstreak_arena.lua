@@ -26,6 +26,7 @@ end
 local function reset_buffs(player)
     if player == nil then return end
     player:set_max_health(100)
+    if player.health ~= nil and player.health > 100 then player:set_health(100) end
     player:set_gravity(1)
     player:set_velocity_modifier(1)
     player:set_render_color(255, 255, 255, 255)
@@ -55,7 +56,6 @@ local function apply_milestone(player, count)
     if reward.weapon then player:give_item(reward.weapon) end
 
     cs.server.print_chat_all(cs.colors.gold .. player.name .. " " .. reward.text .. "！")
-    player:emit_sound("sounds/ui/achievement_earned.vsnd_c", 0.8, 0)
 end
 
 plugin:on("player_death", function(event)
@@ -92,8 +92,9 @@ plugin:on("player_spawn", function(event)
     if not human(player) then return cs.continue end
 
     -- 死亡时重置了计数；出生时负责清除上一条生命留下的 Pawn 强化。
+    local steam_id = player.steam_id
     plugin:next_frame(function()
-        local current = cs.players.get_steamid(player.steam_id)
+        local current = cs.players.get_steamid(steam_id)
         if current ~= nil and current.is_alive then reset_buffs(current) end
     end)
     return cs.continue
