@@ -147,7 +147,3 @@ Linux 打包还需要 `curl`、`tar`、glibc C 编译器和 GNU binutils。构�
 
 - `artifacts/Lua2CS-preview-linux-x64.zip`
 - `artifacts/Lua2CS-preview-win-x64.zip`
-
-## 📄 许可证
-
-MIT
