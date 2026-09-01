@@ -1,6 +1,6 @@
 local plugin = cs.plugin({
     name = "awa",
-    version = "0.0.1",
+    version = "0.1.3",
     description = "玩家发送 awa 时回复，并播报真人玩家进服和离服"
 })
 

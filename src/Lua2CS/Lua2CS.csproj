@@ -6,7 +6,7 @@
     <Nullable>enable</Nullable>
     <AssemblyName>Lua2CS</AssemblyName>
     <RootNamespace>Lua2CS</RootNamespace>
-    <Version>0.8.0</Version>
+    <Version>0.8.1</Version>
     <RuntimeIdentifiers>linux-x64;win-x64</RuntimeIdentifiers>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
     <GenerateDocumentationFile>true</GenerateDocumentationFile>

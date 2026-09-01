@@ -15,7 +15,7 @@ public sealed class Lua2CSPlugin : BasePlugin, IPluginConfig<Lua2CSConfig>
     private HotReload? _hotReload;
 
     public override string ModuleName => "Lua2CS";
-    public override string ModuleVersion => "0.8.0";
+    public override string ModuleVersion => "0.8.1";
     public override string ModuleDescription => "面向 CounterStrikeSharp 的 Lua 5.4 插件宿主";
     public Lua2CSConfig Config { get; set; } = new();
 

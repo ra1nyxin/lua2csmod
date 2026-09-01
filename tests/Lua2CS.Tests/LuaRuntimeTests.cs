@@ -535,7 +535,7 @@ public sealed class LuaRuntimeTests : IDisposable
         using var plugin = new LuaRuntime(NullLogger.Instance, false).Prepare(path);
         var commands = plugin.Registrations.OfType<CommandRegistration>().ToDictionary(item => item.Name);
 
-        Assert.Equal("1.3.0", plugin.Version);
+        Assert.Equal("0.3.5", plugin.Version);
         Assert.Equal(13, plugin.Registrations.Count);
         Assert.Single(plugin.Registrations.OfType<ListenerRegistration>());
         Assert.Equal([

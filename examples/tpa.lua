@@ -15,7 +15,7 @@
 
 local plugin = cs.plugin({
     name = "玩家传送请求",
-    version = "1.3.0",
+    version = "0.3.5",
     description = "提供不限制阵营和回合状态的宽松玩家传送请求"
 })
 
@@ -23,12 +23,23 @@ local request_timeout = 30
 local teleport_offset = 48
 local next_request_id = 0
 
-local function colored(message)
-    return cs.colors.blue .. message .. cs.colors.default
+local styles = {
+    info = { color = cs.colors.blue, marker = "[i]" },
+    success = { color = cs.colors.green, marker = "[+]" },
+    warning = { color = cs.colors.yellow, marker = "[!]" },
+    error = { color = cs.colors.red, marker = "[x]" }
+}
+
+local function styled(kind, message)
+    local style = assert(styles[kind], "未知的 TPA 消息样式：" .. tostring(kind))
+    return cs.colors.blue .. "[TPA] "
+        .. style.color .. style.marker .. " "
+        .. cs.colors.white .. message
+        .. cs.colors.default
 end
 
-local function reply(command, message)
-    command:reply(colored(message))
+local function reply(command, kind, message)
+    command:reply(styled(kind, message))
 end
 
 -- 请求全部以 SteamID64 关联，不能用 slot 保存长期身份：玩家离服后 slot 会被复用。
@@ -52,9 +63,9 @@ local function remove_request(request)
     end
 end
 
-local function notify_online(steam_id, message)
+local function notify_online(steam_id, kind, message)
     local player = cs.players.get_steamid(steam_id)
-    if player ~= nil then player:print_chat(colored(message)) end
+    if player ~= nil then player:print_chat(styled(kind, message)) end
 end
 
 local function random_nearby_position(position)
@@ -79,17 +90,17 @@ local function expire_request(request)
 
     remove_request(request)
     local description = request_description(request)
-    notify_online(request.sender_id, description .. "已过期。")
-    notify_online(request.target_id, description .. "已过期。")
+    notify_online(request.sender_id, "warning", description .. "已过期。")
+    notify_online(request.target_id, "warning", description .. "已过期。")
 end
 
 local function select_one_player(matches, query, command)
     if #matches == 0 then
-        reply(command, "没有找到玩家：" .. query)
+        reply(command, "error", "没有找到玩家：" .. query)
         return nil
     end
     if #matches > 1 then
-        reply(command, "匹配到多名玩家，请输入更完整的名字、槽位、userid 或 SteamID64。")
+        reply(command, "error", "匹配到多名玩家，请输入更完整的名字、槽位、userid 或 SteamID64。")
         return nil
     end
     return matches[1]
@@ -106,7 +117,7 @@ end
 local function find_one_player_by_name(query, command)
     query = query:match("^%s*(.-)%s*$")
     if query == "" then
-        reply(command, "玩家名不能为空。")
+        reply(command, "error", "玩家名不能为空。")
         return nil
     end
 
@@ -122,13 +133,13 @@ end
 
 local function parse_non_negative_integer(value, label, command)
     if value == nil or value:match("^%d+$") == nil then
-        reply(command, label .. " 必须是非负整数。")
+        reply(command, "error", label .. " 必须是非负整数。")
         return nil
     end
 
     local number = tonumber(value)
     if number == nil or math.type(number) ~= "integer" or number < 0 then
-        reply(command, label .. " 必须是有效的非负整数。")
+        reply(command, "error", label .. " 必须是有效的非负整数。")
         return nil
     end
     return number
@@ -139,7 +150,7 @@ local function find_one_player_by_userid(value, command)
     if user_id == nil then return nil end
 
     local target = cs.players.get_userid(user_id)
-    if target == nil then reply(command, "没有找到 userid 为 " .. user_id .. " 的玩家。") end
+    if target == nil then reply(command, "error", "没有找到 userid 为 " .. user_id .. " 的玩家。") end
     return target
 end
 
@@ -148,18 +159,18 @@ local function find_one_player_by_slot(value, command)
     if slot == nil then return nil end
 
     local target = cs.players.get(slot)
-    if target == nil then reply(command, "没有找到 slot 为 " .. slot .. " 的玩家。") end
+    if target == nil then reply(command, "error", "没有找到 slot 为 " .. slot .. " 的玩家。") end
     return target
 end
 
 local function validate_target(player, target, command)
     if target == nil then return nil end
     if target.steam_id == player.steam_id then
-        reply(command, "不能向自己发送传送请求。")
+        reply(command, "error", "不能向自己发送传送请求。")
         return nil
     end
     if target.is_bot or target.is_hltv then
-        reply(command, "不能向机器人或 HLTV 发送传送请求。")
+        reply(command, "error", "不能向机器人或 HLTV 发送传送请求。")
         return nil
     end
     return target
@@ -183,7 +194,7 @@ end
 local function select_request(player, query, command)
     local requests = current_requests(player.steam_id)
     if #requests == 0 then
-        reply(command, "当前没有等待处理的传送请求。")
+        reply(command, "warning", "当前没有等待处理的传送请求。")
         return nil
     end
 
@@ -201,7 +212,7 @@ local function select_request(player, query, command)
 
     local request = outgoing[sender.steam_id]
     if request == nil or request.target_id ~= player.steam_id then
-        reply(command, sender.name .. " 没有向你发送传送请求。")
+        reply(command, "warning", sender.name .. " 没有向你发送传送请求。")
         return nil
     end
     return request
@@ -215,7 +226,7 @@ local function create_request(player, target, mode, command)
         if old_request.expires_at <= now() then
             expire_request(old_request)
         else
-            reply(command, "你已经向 " .. old_request.target_name .. " 发送过请求，请等待处理或使用 css_tpcancel 取消。")
+            reply(command, "warning", "你已经向 " .. old_request.target_name .. " 发送过请求，请等待处理或使用 css_tpcancel 取消。")
             return
         end
     end
@@ -237,11 +248,11 @@ local function create_request(player, target, mode, command)
     incoming[request.target_id][request.sender_id] = request
 
     if mode == "here" then
-        reply(command, "已邀请 " .. target.name .. " 传送到你身边，" .. request_timeout .. " 秒后过期。")
-        target:print_chat(colored(player.name .. " 邀请你传送到其身边。输入 !tpaccept 接受，或 !tpdeny 拒绝。"))
+        reply(command, "success", "已邀请 " .. target.name .. " 传送到你身边，" .. request_timeout .. " 秒后过期。")
+        target:print_chat(styled("info", player.name .. " 邀请你传送到其身边。输入 !tpaccept 接受，或 !tpdeny 拒绝。"))
     else
-        reply(command, "已向 " .. target.name .. " 发送传送请求，" .. request_timeout .. " 秒后过期。")
-        target:print_chat(colored(player.name .. " 请求传送到你身边。输入 !tpaccept 接受，或 !tpdeny 拒绝。"))
+        reply(command, "success", "已向 " .. target.name .. " 发送传送请求，" .. request_timeout .. " 秒后过期。")
+        target:print_chat(styled("info", player.name .. " 请求传送到你身边。输入 !tpaccept 接受，或 !tpdeny 拒绝。"))
     end
 
     plugin:after(request_timeout, function()
@@ -272,14 +283,14 @@ plugin:command("css_tpalist", {
         return left.user_id < right.user_id
     end)
 
-    reply(command, "TPA 玩家列表：")
+    reply(command, "info", "TPA 玩家列表：")
     for _, candidate in ipairs(players) do
         local flags = {}
         if candidate.steam_id == player.steam_id then flags[#flags + 1] = "自己" end
         if candidate.is_bot then flags[#flags + 1] = "BOT" end
         if candidate.is_hltv then flags[#flags + 1] = "HLTV" end
         local suffix = #flags > 0 and " [" .. table.concat(flags, "/") .. "]" or ""
-        reply(command, "[userid: " .. candidate.user_id .. " | slot: " .. candidate.slot .. "] " .. candidate.name .. suffix)
+        reply(command, "info", "[userid: " .. candidate.user_id .. " | slot: " .. candidate.slot .. "] " .. candidate.name .. suffix)
     end
 end)
 
@@ -322,18 +333,18 @@ plugin:command("css_tpaccept", {
     local target = player:refresh()
     if sender == nil then
         remove_request(request)
-        reply(command, request.sender_name .. " 已经离开服务器，请求已取消。")
+        reply(command, "warning", request.sender_name .. " 已经离开服务器，请求已取消。")
         return
     end
     if target == nil or target.steam_id ~= request.target_id then
         return
     end
     if not sender.is_alive then
-        reply(command, sender.name .. " 当前未存活，暂时无法传送。")
+        reply(command, "warning", sender.name .. " 当前未存活，暂时无法传送。")
         return
     end
     if not target.is_alive then
-        reply(command, "你当前未存活，暂时无法接受传送。")
+        reply(command, "warning", "你当前未存活，暂时无法接受传送。")
         return
     end
 
@@ -347,23 +358,23 @@ plugin:command("css_tpaccept", {
         anchor = sender
     end
     if anchor.position == nil then
-        reply(command, "目标玩家的位置无效，暂时无法传送。")
+        reply(command, "error", "目标玩家的位置无效，暂时无法传送。")
         return
     end
 
     local destination = random_nearby_position(anchor.position)
     if not mover:teleport(destination, anchor.eye_angles, cs.vec3(0, 0, 0)) then
-        reply(command, "传送失败，请稍后重试。")
+        reply(command, "error", "传送失败，请稍后重试。")
         return
     end
 
     remove_request(request)
     if request.mode == "here" then
-        reply(command, "已接受 " .. sender.name .. " 的邀请，已传送到其身边。")
-        sender:print_chat(colored(target.name .. " 已接受邀请并传送到你身边。"))
+        reply(command, "success", "已接受 " .. sender.name .. " 的邀请，已传送到其身边。")
+        sender:print_chat(styled("success", target.name .. " 已接受邀请并传送到你身边。"))
     else
-        reply(command, "已接受 " .. sender.name .. " 的传送请求。")
-        sender:print_chat(colored("传送请求已被 " .. target.name .. " 接受。"))
+        reply(command, "success", "已接受 " .. sender.name .. " 的传送请求。")
+        sender:print_chat(styled("success", "传送请求已被 " .. target.name .. " 接受。"))
     end
 end)
 
@@ -378,11 +389,11 @@ plugin:command("css_tpdeny", {
 
     remove_request(request)
     if request.mode == "here" then
-        reply(command, "已拒绝 " .. request.sender_name .. " 的传送邀请。")
-        notify_online(request.sender_id, request.target_name .. " 拒绝了你的传送邀请。")
+        reply(command, "warning", "已拒绝 " .. request.sender_name .. " 的传送邀请。")
+        notify_online(request.sender_id, "warning", request.target_name .. " 拒绝了你的传送邀请。")
     else
-        reply(command, "已拒绝 " .. request.sender_name .. " 的传送请求。")
-        notify_online(request.sender_id, request.target_name .. " 拒绝了你的传送请求。")
+        reply(command, "warning", "已拒绝 " .. request.sender_name .. " 的传送请求。")
+        notify_online(request.sender_id, "warning", request.target_name .. " 拒绝了你的传送请求。")
     end
 end)
 
@@ -392,17 +403,17 @@ plugin:command("css_tpcancel", {
 }, function(player, command)
     local request = outgoing[player.steam_id]
     if request == nil then
-        reply(command, "你当前没有等待处理的传送请求。")
+        reply(command, "warning", "你当前没有等待处理的传送请求。")
         return
     end
 
     remove_request(request)
     if request.mode == "here" then
-        reply(command, "已取消对 " .. request.target_name .. " 的传送邀请。")
-        notify_online(request.target_id, request.sender_name .. " 取消了传送邀请。")
+        reply(command, "warning", "已取消对 " .. request.target_name .. " 的传送邀请。")
+        notify_online(request.target_id, "warning", request.sender_name .. " 取消了传送邀请。")
     else
-        reply(command, "已取消向 " .. request.target_name .. " 发送的传送请求。")
-        notify_online(request.target_id, request.sender_name .. " 取消了传送请求。")
+        reply(command, "warning", "已取消向 " .. request.target_name .. " 发送的传送请求。")
+        notify_online(request.target_id, "warning", request.sender_name .. " 取消了传送请求。")
     end
 end)
 
@@ -419,9 +430,9 @@ plugin:listen("OnClientDisconnect", function(slot)
     for _, request in ipairs(affected) do
         remove_request(request)
         if request.sender_slot == slot then
-            notify_online(request.target_id, request.sender_name .. " 已离开服务器，传送请求已取消。")
+            notify_online(request.target_id, "warning", request.sender_name .. " 已离开服务器，传送请求已取消。")
         else
-            notify_online(request.sender_id, request.target_name .. " 已离开服务器，传送请求已取消。")
+            notify_online(request.sender_id, "warning", request.target_name .. " 已离开服务器，传送请求已取消。")
         end
     end
 end)

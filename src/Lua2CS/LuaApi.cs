@@ -331,7 +331,7 @@ public sealed class LuaApi : IDisposable
     public void LogWarning(object? message) => _logger.LogWarning("[{Plugin}] {Message}", _plugin.Name, message);
     public void LogError(object? message) => _logger.LogError("[{Plugin}] {Message}", _plugin.Name, message);
 
-    public void ServerPrintChatAll(string message) => Server.PrintToChatAll(message);
+    public void ServerPrintChatAll(string message) => Server.PrintToChatAll(ChatMessageFormatter.Normalize(message));
     public void ServerPrintConsole(string message) => Server.PrintToConsole(message);
     public void ServerExecute(string command) => Server.ExecuteCommand(command);
 
@@ -821,7 +821,7 @@ public sealed class LuaApi : IDisposable
     {
         var player = ResolvePlayer(slot);
         if (player is null) return false;
-        player.PrintToChat(message);
+        player.PrintToChat(ChatMessageFormatter.Normalize(message));
         return true;
     }
 
@@ -1149,7 +1149,7 @@ public sealed class LuaApi : IDisposable
     public bool CommandReply(long contextId, string message)
     {
         if (!_commandContexts.TryGetValue(contextId, out var command)) return false;
-        command.ReplyToCommand(message);
+        command.ReplyToCommand(ChatMessageFormatter.Normalize(message));
         return true;
     }
 
