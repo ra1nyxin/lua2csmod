@@ -147,7 +147,3 @@ The script generates both server installation packages:
 
 - `artifacts/Lua2CS-preview-linux-x64.zip`
 - `artifacts/Lua2CS-preview-win-x64.zip`
-
-## 📄 License
-
-MIT
