@@ -530,6 +530,7 @@ public sealed class LuaRuntimeTests : IDisposable
     [InlineData("vampire_mode.lua")]
     [InlineData("bounty_hunt.lua")]
     [InlineData("chaos_rounds.lua")]
+    [InlineData("hot_potato.lua")]
     public void ShippedExamplesLoad(string fileName)
     {
         var path = Path.Combine(AppContext.BaseDirectory, "examples", fileName);
