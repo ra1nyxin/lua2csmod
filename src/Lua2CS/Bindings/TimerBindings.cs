@@ -6,7 +6,9 @@ namespace Lua2CS.Bindings;
 
 public sealed class TimerBindings(BasePlugin host)
 {
-    public void Validate(TimerRegistration registration)
+    public void Validate(TimerRegistration registration) => ValidateRegistration(registration);
+
+    internal static void ValidateRegistration(TimerRegistration registration)
     {
         if (!float.IsFinite(registration.Interval) || registration.Interval <= 0)
         {

@@ -170,7 +170,8 @@ public sealed class LuaPlugin : IDisposable
 
         Deactivate();
         _disposed = true;
-        Api.Dispose();
+        // Prepare 在 LuaApi 完成初始化前失败时仍要释放 Lua VM，不能让清理异常覆盖原始校验错误。
+        if (Api is not null) Api.Dispose();
         State.Dispose();
     }
 }

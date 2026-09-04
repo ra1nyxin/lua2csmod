@@ -6,7 +6,9 @@ namespace Lua2CS.Bindings;
 
 public sealed class CommandBindings(BasePlugin host)
 {
-    public void Validate(CommandRegistration registration)
+    public void Validate(CommandRegistration registration) => ValidateRegistration(registration);
+
+    internal static void ValidateRegistration(CommandRegistration registration)
     {
         if (string.IsNullOrWhiteSpace(registration.Name) || registration.Name.Any(char.IsWhiteSpace))
         {
@@ -19,7 +21,9 @@ public sealed class CommandBindings(BasePlugin host)
         }
     }
 
-    public void Validate(CommandListenerRegistration registration)
+    public void Validate(CommandListenerRegistration registration) => ValidateRegistration(registration);
+
+    internal static void ValidateRegistration(CommandListenerRegistration registration)
     {
         if (string.IsNullOrWhiteSpace(registration.Name) || registration.Name.Any(char.IsWhiteSpace))
         {

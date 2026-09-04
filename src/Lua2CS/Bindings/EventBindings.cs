@@ -23,7 +23,9 @@ public sealed class EventBindings
 
     public EventBindings(BasePlugin host) => _host = host;
 
-    public void Validate(EventRegistration registration) => ResolveEventType(registration.EventName);
+    public void Validate(EventRegistration registration) => ValidateRegistration(registration);
+
+    internal static void ValidateRegistration(EventRegistration registration) => ResolveEventType(registration.EventName);
 
     public IRegistrationHandle Activate(LuaPlugin plugin, EventRegistration registration)
     {

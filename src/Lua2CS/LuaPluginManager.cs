@@ -234,34 +234,12 @@ public sealed class LuaPluginManager : IDisposable
 
     private void Validate(LuaPlugin candidate, LuaPlugin? replacing)
     {
-        var commands = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        foreach (var registration in candidate.Registrations)
-        {
-            switch (registration)
-            {
-                case EventRegistration gameEvent:
-                    _events.Validate(gameEvent);
-                    break;
-                case ListenerRegistration listener:
-                    _listeners.Validate(listener);
-                    break;
-                case CommandRegistration command:
-                    _commands.Validate(command);
-                    if (!commands.Add(command.Name)) throw new InvalidDataException($"Duplicate Lua command '{command.Name}'.");
-                    break;
-                case CommandListenerRegistration commandListener:
-                    _commands.Validate(commandListener);
-                    break;
-                case TimerRegistration timer:
-                    _timers.Validate(timer);
-                    break;
-                case FrameRegistration frame:
-                    _frames.Validate(frame);
-                    break;
-                default:
-                    throw new NotSupportedException($"Unsupported Lua registration {registration.GetType().Name}.");
-            }
-        }
+        LuaRegistrationValidator.Validate(candidate.Registrations);
+
+        var commands = candidate.Registrations
+            .OfType<CommandRegistration>()
+            .Select(command => command.Name)
+            .ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         var existingCommands = _plugins.Values
             .Where(plugin => !ReferenceEquals(plugin, candidate) && !ReferenceEquals(plugin, replacing))

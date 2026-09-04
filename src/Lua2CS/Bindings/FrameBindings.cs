@@ -4,7 +4,9 @@ namespace Lua2CS.Bindings;
 
 public sealed class FrameBindings
 {
-    public void Validate(FrameRegistration registration)
+    public void Validate(FrameRegistration registration) => ValidateRegistration(registration);
+
+    internal static void ValidateRegistration(FrameRegistration registration)
     {
         if (registration.Schedule == FrameSchedule.AfterTicks && registration.TickDelay is < 1 or > 1_000_000)
         {

@@ -1,4 +1,5 @@
 using CounterStrikeSharp.API.Core;
+using Lua2CS.Bindings;
 using NLua;
 
 namespace Lua2CS;
@@ -64,4 +65,42 @@ internal sealed class RegistrationHandle(long id, Action dispose) : IRegistratio
     public long Id { get; } = id;
 
     public void Dispose() => Interlocked.Exchange(ref _dispose, null)?.Invoke();
+}
+
+internal static class LuaRegistrationValidator
+{
+    internal static void Validate(IEnumerable<RegistrationDefinition> registrations)
+    {
+        var commands = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var registration in registrations)
+        {
+            switch (registration)
+            {
+                case EventRegistration gameEvent:
+                    EventBindings.ValidateRegistration(gameEvent);
+                    break;
+                case ListenerRegistration listener:
+                    ListenerBindings.ValidateRegistration(listener);
+                    break;
+                case CommandRegistration command:
+                    CommandBindings.ValidateRegistration(command);
+                    if (!commands.Add(command.Name))
+                    {
+                        throw new InvalidDataException($"Lua 命令 '{command.Name}' 在同一脚本中重复注册。");
+                    }
+                    break;
+                case CommandListenerRegistration commandListener:
+                    CommandBindings.ValidateRegistration(commandListener);
+                    break;
+                case TimerRegistration timer:
+                    TimerBindings.ValidateRegistration(timer);
+                    break;
+                case FrameRegistration frame:
+                    FrameBindings.ValidateRegistration(frame);
+                    break;
+                default:
+                    throw new NotSupportedException($"不支持的 Lua 注册类型 {registration.GetType().Name}。");
+            }
+        }
+    }
 }

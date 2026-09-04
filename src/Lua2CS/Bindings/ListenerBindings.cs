@@ -24,6 +24,9 @@ public sealed class ListenerBindings
     public ListenerBindings(BasePlugin host) => _host = host;
 
     public void Validate(ListenerRegistration registration)
+        => ValidateRegistration(registration);
+
+    internal static void ValidateRegistration(ListenerRegistration registration)
     {
         var type = ResolveListenerType(registration.ListenerName);
         var returnType = type.GetMethod("Invoke")!.ReturnType;
