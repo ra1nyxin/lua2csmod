@@ -32,12 +32,14 @@ package_runtime() {
         "$project_root/scripts/build-lua54-linux.sh" "$publish_dir/$native_library"
     fi
 
-    mkdir -p "$plugin_dir/scripts" "$plugin_dir/examples"
+    mkdir -p "$plugin_dir/scripts" "$plugin_dir/examples" "$plugin_dir/types"
     cp "$publish_dir/Lua2CS.dll" "$publish_dir/Lua2CS.deps.json" "$plugin_dir/"
     cp "$publish_dir/NLua.dll" "$publish_dir/KeraLua.dll" "$plugin_dir/"
     cp "$publish_dir/$native_library" "$plugin_dir/"
     cp -R "$project_root"/examples/. "$plugin_dir/examples/"
     cp "$project_root/examples/tpa.lua" "$plugin_dir/scripts/tpa.lua"
+    cp "$project_root/lua-types/Lua2CS.lua" "$plugin_dir/types/Lua2CS.lua"
+    cp "$project_root/lua-types/.luarc.json.example" "$plugin_dir/scripts/.luarc.json.example"
 
     (
         cd "$stage_dir"

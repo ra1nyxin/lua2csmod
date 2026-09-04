@@ -133,6 +133,12 @@ Lua 与 C# 之间的字符串统一使用 UTF-8，可直接使用中文插件名
 
 完整接口参见 [Lua 脚本接口](docs/lua-api.md)，可运行示例位于 [examples](examples)。
 
+## 🧰 开发工具
+
+安装包会在 Lua2CS 目录中携带 `types/Lua2CS.lua`，这是 Lua Language Server 使用的中文类型库，包含 `cs` 全局对象、玩家和武器快照、命令、菜单、定时器、常用事件字段及全部公开接口的补全信息。脚本目录还会生成 `.luarc.json.example`：将它作为编辑器工作区的 `.luarc.json` 启用后，LuaLS 会以 Lua 5.4 分析脚本，并识别 `cs` 全局变量。
+
+类型文件只用于编辑器分析，不能在脚本中 `require`。更多编辑器配置说明参见 [Lua 开发与诊断](docs/lua-development.md)。
+
 ## 🏗️ 本地构建
 
 ```bash
