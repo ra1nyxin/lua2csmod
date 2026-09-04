@@ -72,6 +72,8 @@ Every top-level `.lua` file in `scripts` is an independent plugin with its own L
 ```text
 css_lua list
 css_lua status
+css_lua inspect <script>
+css_lua errors [script]
 css_lua load <script>
 css_lua reload <script>
 css_lua unload <script>
@@ -79,6 +81,8 @@ css_lua reload_all
 ```
 
 The commands require `@css/root` permission by default. The server console and RCON may always use management commands. They can also be invoked through CounterStrikeSharp's command trigger in game chat, for example `!lua list`. `css_lua doctor` is an alias for `css_lua status`.
+
+`status` summarizes callback count, failures, slow callbacks, and average/max duration. `inspect` shows one loaded script's cumulative metrics, latest callback failure, and latest slow callback. `errors` retains the latest 20 load or hot-reload failures for the current host process, optionally filtered by script name.
 
 With automatic reload enabled, changing a top-level script reloads only that plugin, while changing a shared module in a subdirectory reloads every Lua plugin. A new script is syntax-checked, executed, and registration-validated in an isolated VM before it replaces the current version. If reload fails, the old version is retained or restored.
 
@@ -91,6 +95,7 @@ CounterStrikeSharp generates `addons/counterstrikesharp/configs/plugins/Lua2CS/L
   "ScriptsDirectory": "scripts",
   "AutoReload": true,
   "ReloadDebounceMilliseconds": 400,
+  "SlowCallbackMilliseconds": 25,
   "AdminPermission": "@css/root",
   "AllowUnsafeLibraries": false,
   "ConfigVersion": 1
@@ -100,6 +105,7 @@ CounterStrikeSharp generates `addons/counterstrikesharp/configs/plugins/Lua2CS/L
 - `ScriptsDirectory`: Script directory relative to the Lua2CS plugin directory; it cannot escape the plugin directory.
 - `AutoReload`: Watches `.lua` file changes and reloads them automatically.
 - `ReloadDebounceMilliseconds`: File-change debounce interval, from 100 to 5000 milliseconds.
+- `SlowCallbackMilliseconds`: Slow-callback threshold, defaulting to 25 milliseconds and limited to 1 through 5000. Exceeding callbacks are counted and produce throttled warning logs.
 - `AdminPermission`: CounterStrikeSharp permission required for in-game management commands; leave empty to disable permission checks.
 - `AllowUnsafeLibraries`: Restores the Lua file and operating-system libraries. `luanet` remains unavailable even when enabled.
 
@@ -132,6 +138,12 @@ Strings passed between Lua and C# consistently use UTF-8, so plugin names, comma
 Templates other than TPA do not run by default. The package places TPA in both `scripts` and `examples`, while all other templates are installed only in `examples`. Copy a selected template into the sibling `scripts` directory to load it; later saves are hot-reloaded automatically.
 
 See the complete [Lua scripting API](docs/lua-api.md), with runnable templates in [examples](examples).
+
+## 🧰 Development Tools
+
+The package includes `types/Lua2CS.lua`, a Lua Language Server type library for the `cs` global, player and weapon snapshots, commands, menus, timers, common event fields, and every public API. The scripts directory also includes `.luarc.json.example`; use it as the workspace `.luarc.json` to analyze scripts as Lua 5.4 and recognize `cs` as a global.
+
+The type library is only for editor analysis and must not be loaded with `require`. The repository also provides a local preflight command: `dotnet run --project tools/Lua2CS.Validate -- <script-or-directory>`. The Chinese [Lua development and diagnostics guide](docs/lua-development.md) covers setup and server diagnostics.
 
 ## 🏗️ Local Build
 
