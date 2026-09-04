@@ -30,7 +30,7 @@ public sealed class EventBindings
     public IRegistrationHandle Activate(LuaPlugin plugin, EventRegistration registration)
     {
         var eventType = ResolveEventType(registration.EventName);
-        var handler = CreateHandler(eventType, plugin, registration.Callback, registration.Mode);
+        var handler = CreateHandler(eventType, plugin, registration.Callback, registration.Mode, registration.EventName);
         RegisterMethod.MakeGenericMethod(eventType).Invoke(_host, [handler, registration.Mode]);
 
         return new RegistrationHandle(registration.Id, () =>
@@ -43,19 +43,19 @@ public sealed class EventBindings
         .Distinct(StringComparer.OrdinalIgnoreCase)
         .ToArray();
 
-    private Delegate CreateHandler(Type eventType, LuaPlugin plugin, LuaFunction callback, HookMode mode)
+    private Delegate CreateHandler(Type eventType, LuaPlugin plugin, LuaFunction callback, HookMode mode, string eventName)
     {
         var method = GetType().GetMethod(nameof(CreateTypedHandler), BindingFlags.Instance | BindingFlags.NonPublic)!;
-        return (Delegate)method.MakeGenericMethod(eventType).Invoke(this, [plugin, callback, mode])!;
+        return (Delegate)method.MakeGenericMethod(eventType).Invoke(this, [plugin, callback, mode, eventName])!;
     }
 
-    private BasePlugin.GameEventHandler<T> CreateTypedHandler<T>(LuaPlugin plugin, LuaFunction callback, HookMode mode)
+    private BasePlugin.GameEventHandler<T> CreateTypedHandler<T>(LuaPlugin plugin, LuaFunction callback, HookMode mode, string eventName)
         where T : GameEvent
     {
         return (gameEvent, info) =>
         {
             using var snapshot = plugin.Api.CreateEventSnapshot(gameEvent, info, mode == HookMode.Pre);
-            var result = plugin.Invoke(callback, snapshot.Event, snapshot.Info).FirstOrDefault();
+            var result = plugin.Invoke($"事件 {eventName}", callback, snapshot.Event, snapshot.Info).FirstOrDefault();
             snapshot.Apply();
             return plugin.Api.ParseHookResult(result);
         };

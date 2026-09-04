@@ -4,7 +4,14 @@
 
 首次安装时会默认加载 `scripts/tpa.lua`，其他示例模板不会自动运行。TPA 命令、宽松规则和停用方法参见 README 的“默认 TPA”章节。Lua2CS 会在启动阶段探测 Lua 5.4 原生运行库；服务器控制台可执行 `css_lua status` 查看 Lua 版本、CounterStrikeSharp 版本、平台、自动重载状态、脚本目录和已加载数量。`css_lua doctor` 是同一命令的别名。
 
-其他管理命令包括 `css_lua list`、`css_lua load <脚本名>`、`css_lua reload <脚本名>`、`css_lua unload <脚本名>` 和 `css_lua reload_all`。游戏内默认需要 `@css/root` 权限，服务器控制台和 RCON 不受该权限限制。
+其他管理命令包括 `css_lua list`、`css_lua inspect <脚本名>`、`css_lua errors [脚本名]`、`css_lua load <脚本名>`、`css_lua reload <脚本名>`、`css_lua unload <脚本名>` 和 `css_lua reload_all`。游戏内默认需要 `@css/root` 权限，服务器控制台和 RCON 不受该权限限制。
+
+- `css_lua status`：汇总全部已加载脚本的回调次数、失败次数、慢回调次数、平均耗时、最大耗时、慢回调阈值和最近操作失败数。
+- `css_lua list`：列出每个脚本的注册项数量及其累计回调统计。
+- `css_lua inspect <脚本名>`：显示该脚本最近异常、最近慢回调、总耗时、平均耗时和最大耗时。
+- `css_lua errors [脚本名]`：显示当前 Lua2CS 宿主进程最近 20 条加载、重载验证、重载激活、重载回滚或卸载生命周期失败；不写脚本名时显示全部记录。
+
+回调统计覆盖游戏事件、Listener、自定义命令、原生命令监听、菜单回调、定时器、帧/Tick 调度和生命周期回调。慢回调阈值通过 `Lua2CS.json` 的 `SlowCallbackMilliseconds` 设置，默认 25 毫秒，允许 1 到 5000 毫秒。超过阈值的回调不会被终止，但会进入统计；同一脚本同一回调来源的警告日志最多每 30 秒写入一次。
 
 ## 插件信息与生命周期
 

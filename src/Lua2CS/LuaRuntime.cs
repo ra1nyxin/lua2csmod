@@ -5,7 +5,7 @@ using NLua;
 
 namespace Lua2CS;
 
-public sealed class LuaRuntime(ILogger logger, bool allowUnsafeLibraries)
+public sealed class LuaRuntime(ILogger logger, bool allowUnsafeLibraries, int slowCallbackMilliseconds = 25)
 {
     private const string Bootstrap = """
         local create_plugin = __lua2cs_create_plugin
@@ -772,7 +772,7 @@ public sealed class LuaRuntime(ILogger logger, bool allowUnsafeLibraries)
 
         try
         {
-            plugin = new LuaPlugin(fullPath, state, logger);
+            plugin = new LuaPlugin(fullPath, state, logger, slowCallbackMilliseconds);
             var api = new LuaApi(plugin, logger);
             plugin.Api = api;
 

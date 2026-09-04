@@ -24,7 +24,7 @@ public sealed class FrameBindings
             if (handle.IsDisposed || !plugin.IsActive) return;
             try
             {
-                plugin.Invoke(registration.Callback);
+                plugin.Invoke($"帧调度 {registration.Schedule} #{registration.Id}", registration.Callback);
             }
             finally
             {

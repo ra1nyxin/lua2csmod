@@ -117,6 +117,26 @@ public sealed class LuaRuntimeTests : IDisposable
     }
 
     [Fact]
+    public void CallbackDiagnosticsCaptureLifecycleFailures()
+    {
+        var path = WriteScript("lifecycle_failure.lua", """
+            local plugin = cs.plugin({ name = "Lifecycle Failure" })
+            plugin:on_load(function()
+                error("intentional lifecycle failure")
+            end)
+            """);
+
+        using var plugin = new LuaRuntime(NullLogger.Instance, false).Prepare(path);
+
+        Assert.ThrowsAny<Exception>(() => plugin.InvokeLifecycle(plugin.LoadCallback, false));
+        var diagnostics = plugin.Diagnostics;
+        Assert.Equal(1, diagnostics.InvocationCount);
+        Assert.Equal(1, diagnostics.FailureCount);
+        Assert.Equal("生命周期", diagnostics.LastFailureSource);
+        Assert.Contains("intentional lifecycle failure", diagnostics.LastFailureMessage);
+    }
+
+    [Fact]
     public void RegistrationCanBeCancelledDuringPreparation()
     {
         var path = WriteScript("cancel.lua", """

@@ -57,7 +57,7 @@ public sealed class CommandBindings(BasePlugin host)
 
             using var commandSnapshot = plugin.Api.CreateCommandSnapshot(command);
             using var playerTable = player is null ? null : plugin.Api.CreatePlayerTable(player);
-            plugin.Invoke(registration.Callback, playerTable, commandSnapshot.Table);
+            plugin.Invoke($"命令 {registration.Name}", registration.Callback, playerTable, commandSnapshot.Table);
         };
 
         host.AddCommand(registration.Name, registration.Description, handler);
@@ -70,7 +70,7 @@ public sealed class CommandBindings(BasePlugin host)
         {
             using var commandSnapshot = plugin.Api.CreateCommandSnapshot(command);
             using var playerTable = player is null ? null : plugin.Api.CreatePlayerTable(player);
-            var result = plugin.Invoke(registration.Callback, playerTable, commandSnapshot.Table).FirstOrDefault();
+            var result = plugin.Invoke($"原生命令 {registration.Name}", registration.Callback, playerTable, commandSnapshot.Table).FirstOrDefault();
             return plugin.Api.ParseHookResult(result);
         };
 

@@ -20,13 +20,20 @@ public sealed class LuaPluginManager : IDisposable
     private readonly TimerBindings _timers;
     private readonly FrameBindings _frames;
     private readonly Dictionary<string, LuaPlugin> _plugins = new(StringComparer.OrdinalIgnoreCase);
+    private readonly Queue<LuaOperationFailure> _operationFailures = [];
+    private readonly object _failureGate = new();
     private bool _disposed;
 
-    public LuaPluginManager(BasePlugin host, ILogger logger, string scriptsDirectory, bool allowUnsafeLibraries)
+    public LuaPluginManager(
+        BasePlugin host,
+        ILogger logger,
+        string scriptsDirectory,
+        bool allowUnsafeLibraries,
+        int slowCallbackMilliseconds)
     {
         _logger = logger;
         _scriptsDirectory = Path.GetFullPath(scriptsDirectory);
-        _runtime = new LuaRuntime(logger, allowUnsafeLibraries);
+        _runtime = new LuaRuntime(logger, allowUnsafeLibraries, slowCallbackMilliseconds);
         RuntimeVersion = LuaRuntime.ProbeRuntimeVersion();
         _events = new EventBindings(host);
         _listeners = new ListenerBindings(host);
@@ -39,6 +46,25 @@ public sealed class LuaPluginManager : IDisposable
     public string ScriptsDirectory => _scriptsDirectory;
     public string RuntimeVersion { get; }
     public IReadOnlyCollection<LuaPlugin> Plugins => _plugins.Values;
+    public LuaCallbackDiagnosticsSnapshot CallbackDiagnostics =>
+        LuaCallbackDiagnosticsSnapshot.Combine(_plugins.Values.Select(plugin => plugin.Diagnostics));
+
+    public IReadOnlyList<LuaOperationFailure> OperationFailures
+    {
+        get
+        {
+            lock (_failureGate)
+            {
+                return _operationFailures.ToArray();
+            }
+        }
+    }
+
+    public LuaPlugin? FindPlugin(string key)
+    {
+        key = NormalizeKey(key);
+        return _plugins.GetValueOrDefault(key);
+    }
 
     public IReadOnlyList<PluginOperationResult> LoadAll()
     {
@@ -77,7 +103,7 @@ public sealed class LuaPluginManager : IDisposable
             candidate.Activate(
                 definition => Activate(candidate, definition),
                 definition => ValidateAndActivate(candidate, definition, null));
-            candidate.InvokeLifecycle(candidate.LoadCallback, false);
+            candidate.InvokeLifecycle(candidate.LoadCallback, false, "生命周期 on_load");
             _plugins.Add(key, candidate);
             _logger.LogInformation("Loaded Lua plugin {Name} v{Version} from {File}", candidate.Name, candidate.Version, Path.GetFileName(path));
             return PluginOperationResult.Ok(key, $"已加载 {candidate.Name} v{candidate.Version}。");
@@ -86,6 +112,7 @@ public sealed class LuaPluginManager : IDisposable
         {
             candidate?.Dispose();
             exception = Unwrap(exception);
+            RecordOperationFailure(key, "加载", exception);
             _logger.LogError(exception, "Failed to load Lua script {Script}", key);
             return PluginOperationResult.Fail(key, exception.Message);
         }
@@ -110,6 +137,7 @@ public sealed class LuaPluginManager : IDisposable
         {
             candidate?.Dispose();
             exception = Unwrap(exception);
+            RecordOperationFailure(key, "重载验证", exception);
             _logger.LogError(exception, "Lua reload validation failed for {Script}; keeping the old version", key);
             return PluginOperationResult.Fail(key, $"重载被拒绝，旧版本仍在运行：{exception.Message}");
         }
@@ -120,7 +148,7 @@ public sealed class LuaPluginManager : IDisposable
             candidate.Activate(
                 definition => Activate(candidate, definition),
                 definition => ValidateAndActivate(candidate, definition, current));
-            candidate.InvokeLifecycle(candidate.LoadCallback, true);
+            candidate.InvokeLifecycle(candidate.LoadCallback, true, "生命周期 on_load");
         }
         catch (Exception exception)
         {
@@ -136,17 +164,19 @@ public sealed class LuaPluginManager : IDisposable
             {
                 _plugins.Remove(key);
                 current.Dispose();
+                RecordOperationFailure(key, "重载回滚", Unwrap(rollbackException));
                 _logger.LogCritical(rollbackException, "Failed to restore Lua plugin {Script} after a rejected reload", key);
                 return PluginOperationResult.Fail(key, $"重载和回滚均失败：{exception.Message}");
             }
 
             _logger.LogError(exception, "Lua reload activation failed for {Script}; restored the old version", key);
+            RecordOperationFailure(key, "重载激活", exception);
             return PluginOperationResult.Fail(key, $"重载失败，已恢复旧版本：{exception.Message}");
         }
 
         try
         {
-            current.InvokeLifecycle(current.UnloadCallback, true);
+            current.InvokeLifecycle(current.UnloadCallback, true, "生命周期 on_unload");
         }
         catch (Exception exception)
         {
@@ -167,10 +197,11 @@ public sealed class LuaPluginManager : IDisposable
 
         try
         {
-            plugin.InvokeLifecycle(plugin.UnloadCallback, hotReload);
+            plugin.InvokeLifecycle(plugin.UnloadCallback, hotReload, "生命周期 on_unload");
         }
         catch (Exception exception)
         {
+            RecordOperationFailure(key, "卸载生命周期", exception);
             _logger.LogError(exception, "Lua plugin {Script} failed during on_unload", key);
         }
         finally
@@ -293,6 +324,16 @@ public sealed class LuaPluginManager : IDisposable
     {
         while (exception is TargetInvocationException { InnerException: not null }) exception = exception.InnerException;
         return exception;
+    }
+
+    private void RecordOperationFailure(string key, string operation, Exception exception)
+    {
+        var failure = new LuaOperationFailure(DateTimeOffset.UtcNow, key, operation, exception.GetBaseException().Message);
+        lock (_failureGate)
+        {
+            _operationFailures.Enqueue(failure);
+            while (_operationFailures.Count > 20) _operationFailures.Dequeue();
+        }
     }
 }
 

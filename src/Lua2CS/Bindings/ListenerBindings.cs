@@ -39,7 +39,7 @@ public sealed class ListenerBindings
     public IRegistrationHandle Activate(LuaPlugin plugin, ListenerRegistration registration)
     {
         var listenerType = ResolveListenerType(registration.ListenerName);
-        var handler = CreateHandler(listenerType, plugin, registration.Callback);
+        var handler = CreateHandler(listenerType, plugin, registration.Callback, registration.ListenerName);
         RegisterMethod.MakeGenericMethod(listenerType).Invoke(_host, [handler]);
 
         return new RegistrationHandle(registration.Id, () =>
@@ -52,7 +52,7 @@ public sealed class ListenerBindings
         .Distinct(StringComparer.OrdinalIgnoreCase)
         .ToArray();
 
-    private Delegate CreateHandler(Type delegateType, LuaPlugin plugin, LuaFunction callback)
+    private Delegate CreateHandler(Type delegateType, LuaPlugin plugin, LuaFunction callback, string listenerName)
     {
         var invoke = delegateType.GetMethod("Invoke")!;
         var parameters = invoke.GetParameters()
@@ -69,6 +69,7 @@ public sealed class ListenerBindings
                 Type.EmptyTypes,
                 Expression.Constant(plugin),
                 Expression.Constant(callback),
+                Expression.Constant(listenerName),
                 arguments);
         }
         else
@@ -79,23 +80,24 @@ public sealed class ListenerBindings
                 Type.EmptyTypes,
                 Expression.Constant(plugin),
                 Expression.Constant(callback),
+                Expression.Constant(listenerName),
                 arguments);
         }
 
         return Expression.Lambda(delegateType, body, parameters).Compile();
     }
 
-    public HookResult DispatchReturning(LuaPlugin plugin, LuaFunction callback, object?[] arguments)
+    public HookResult DispatchReturning(LuaPlugin plugin, LuaFunction callback, string listenerName, object?[] arguments)
     {
         using var mapped = plugin.Api.MapArguments(arguments);
-        var result = plugin.Invoke(callback, mapped.Values).FirstOrDefault();
+        var result = plugin.Invoke($"监听器 {listenerName}", callback, mapped.Values).FirstOrDefault();
         return plugin.Api.ParseHookResult(result);
     }
 
-    public void DispatchVoid(LuaPlugin plugin, LuaFunction callback, object?[] arguments)
+    public void DispatchVoid(LuaPlugin plugin, LuaFunction callback, string listenerName, object?[] arguments)
     {
         using var mapped = plugin.Api.MapArguments(arguments);
-        plugin.Invoke(callback, mapped.Values);
+        plugin.Invoke($"监听器 {listenerName}", callback, mapped.Values);
     }
 
     private static Type ResolveListenerType(string name)

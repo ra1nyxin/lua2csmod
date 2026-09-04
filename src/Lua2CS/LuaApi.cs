@@ -659,7 +659,7 @@ public sealed class LuaApi : IDisposable
                         (selectedPlayer, _) =>
                         {
                             using var selectedPlayerTable = CreatePlayerTable(selectedPlayer);
-                            _plugin.Invoke(callback, selectedPlayerTable, optionIndex);
+                            _plugin.Invoke("菜单回调", callback, selectedPlayerTable, optionIndex);
                             if (menu.PostSelectAction == PostSelectAction.Close
                                 && _ownedMenus.TryGetValue(selectedPlayer.Handle, out var ownedMenu)
                                 && ReferenceEquals(ownedMenu, menu))

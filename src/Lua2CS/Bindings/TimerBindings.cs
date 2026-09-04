@@ -28,7 +28,7 @@ public sealed class TimerBindings(BasePlugin host)
             if (!plugin.IsActive) return;
             try
             {
-                plugin.Invoke(registration.Callback);
+                plugin.Invoke($"定时器 #{registration.Id}", registration.Callback);
             }
             finally
             {

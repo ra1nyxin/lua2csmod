@@ -1,6 +1,7 @@
 using CounterStrikeSharp.API.Core;
 using Microsoft.Extensions.Logging;
 using NLua;
+using System.Diagnostics;
 
 namespace Lua2CS;
 
@@ -12,11 +13,12 @@ public sealed class LuaPlugin : IDisposable
     private bool _disposed;
     private long _nextRegistrationId;
 
-    internal LuaPlugin(string scriptPath, Lua state, ILogger logger)
+    internal LuaPlugin(string scriptPath, Lua state, ILogger logger, int slowCallbackMilliseconds)
     {
         ScriptPath = scriptPath;
         State = state;
         _logger = logger;
+        CallbackDiagnostics = new LuaCallbackDiagnostics(slowCallbackMilliseconds);
     }
 
     public string ScriptPath { get; }
@@ -26,11 +28,13 @@ public sealed class LuaPlugin : IDisposable
     public string Description { get; internal set; } = string.Empty;
     public bool IsActive { get; private set; }
     public IReadOnlyList<RegistrationDefinition> Registrations => _registrations;
+    public LuaCallbackDiagnosticsSnapshot Diagnostics => CallbackDiagnostics.Snapshot();
     internal Lua State { get; }
     internal LuaFunction? LoadCallback { get; set; }
     internal LuaFunction? UnloadCallback { get; set; }
     internal LuaApi Api { get; set; } = null!;
     internal Func<RegistrationDefinition, IRegistrationHandle>? ActivateRegistration { get; set; }
+    private LuaCallbackDiagnostics CallbackDiagnostics { get; }
 
     internal long NextRegistrationId() => Interlocked.Increment(ref _nextRegistrationId);
 
@@ -118,19 +122,22 @@ public sealed class LuaPlugin : IDisposable
         _handles.Clear();
     }
 
-    internal object?[] Invoke(LuaFunction callback, params object?[] args)
+    internal object?[] Invoke(string source, LuaFunction callback, params object?[] args)
     {
         if (_disposed)
         {
             return [];
         }
 
+        var startedAt = Stopwatch.GetTimestamp();
+        Exception? failure = null;
         try
         {
             return callback.Call(args) ?? [];
         }
         catch (Exception exception)
         {
+            failure = exception;
             _logger.LogError(exception, "Lua callback failed in {Plugin}", Name);
             var rootCause = exception.GetBaseException();
             if (!ReferenceEquals(rootCause, exception))
@@ -139,22 +146,58 @@ public sealed class LuaPlugin : IDisposable
             }
             return [];
         }
+        finally
+        {
+            var elapsed = Stopwatch.GetElapsedTime(startedAt);
+            if (CallbackDiagnostics.Record(source, elapsed, failure))
+            {
+                _logger.LogWarning(
+                    "Lua callback in {Plugin} took {ElapsedMilliseconds:F2} ms ({Source}); threshold is {ThresholdMilliseconds} ms",
+                    Name,
+                    elapsed.TotalMilliseconds,
+                    source,
+                    CallbackDiagnostics.SlowCallbackMilliseconds);
+            }
+        }
     }
 
-    internal object?[] InvokeOrThrow(LuaFunction callback, params object?[] args)
+    internal object?[] InvokeOrThrow(string source, LuaFunction callback, params object?[] args)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        return callback.Call(args) ?? [];
+        var startedAt = Stopwatch.GetTimestamp();
+        Exception? failure = null;
+        try
+        {
+            return callback.Call(args) ?? [];
+        }
+        catch (Exception exception)
+        {
+            failure = exception;
+            throw;
+        }
+        finally
+        {
+            var elapsed = Stopwatch.GetElapsedTime(startedAt);
+            if (CallbackDiagnostics.Record(source, elapsed, failure))
+            {
+                _logger.LogWarning(
+                    "Lua callback in {Plugin} took {ElapsedMilliseconds:F2} ms ({Source}); threshold is {ThresholdMilliseconds} ms",
+                    Name,
+                    elapsed.TotalMilliseconds,
+                    source,
+                    CallbackDiagnostics.SlowCallbackMilliseconds);
+            }
+        }
     }
 
-    internal void InvokeLifecycle(LuaFunction? callback, bool hotReload)
+    internal void InvokeLifecycle(LuaFunction? callback, bool hotReload, string source = "生命周期")
     {
         if (callback is null)
         {
             return;
         }
 
-        var results = InvokeOrThrow(callback, hotReload);
+        var results = InvokeOrThrow(source, callback, hotReload);
         if (results.Length > 0 && results[0] is bool success && !success)
         {
             throw new InvalidOperationException($"Lua lifecycle callback rejected activation for {Name}.");

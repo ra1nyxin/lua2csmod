@@ -72,6 +72,8 @@ end)
 ```text
 css_lua list
 css_lua status
+css_lua inspect <脚本名>
+css_lua errors [脚本名]
 css_lua load <脚本名>
 css_lua reload <脚本名>
 css_lua unload <脚本名>
@@ -79,6 +81,8 @@ css_lua reload_all
 ```
 
 默认要求 `@css/root` 权限。服务器控制台和 RCON 始终可以使用管理命令。在游戏聊天中也可通过 CounterStrikeSharp 的命令触发方式执行，例如 `!lua list`。`css_lua doctor` 是 `css_lua status` 的别名。
+
+`status` 会汇总回调次数、失败次数、慢回调次数以及平均和最大耗时；`inspect` 用于查看一个已加载脚本的累计指标、最近异常和最近慢回调；`errors` 保留当前宿主进程最近 20 条加载或热重载失败记录，可选脚本名筛选。
 
 开启自动重载后，修改顶层脚本只会重载对应插件；修改子目录中的公共模块会重载全部 Lua 插件。新脚本会先在独立 VM 中完成语法检查、执行和注册验证，再替换当前版本。重载失败时会保留或恢复旧版本。
 
@@ -91,6 +95,7 @@ CounterStrikeSharp 会生成 `addons/counterstrikesharp/configs/plugins/Lua2CS/L
   "ScriptsDirectory": "scripts",
   "AutoReload": true,
   "ReloadDebounceMilliseconds": 400,
+  "SlowCallbackMilliseconds": 25,
   "AdminPermission": "@css/root",
   "AllowUnsafeLibraries": false,
   "ConfigVersion": 1
@@ -100,6 +105,7 @@ CounterStrikeSharp 会生成 `addons/counterstrikesharp/configs/plugins/Lua2CS/L
 - `ScriptsDirectory`：相对于 Lua2CS 插件目录的脚本目录，不允许逃逸到插件目录之外。
 - `AutoReload`：监听 `.lua` 文件变化并自动重载。
 - `ReloadDebounceMilliseconds`：文件变化防抖时间，允许范围为 100 到 5000 毫秒。
+- `SlowCallbackMilliseconds`：回调慢执行阈值，默认 25 毫秒，允许范围为 1 到 5000 毫秒。超过阈值会进入统计并写入限流警告日志。
 - `AdminPermission`：游戏内管理命令要求的 CounterStrikeSharp 权限；留空表示不检查权限。
 - `AllowUnsafeLibraries`：恢复 Lua 文件和操作系统库。即使开启，也不会暴露 `luanet`。
 
